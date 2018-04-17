@@ -9,7 +9,10 @@ Created on Mon Apr 16 08:24:00 2018
 from __future__ import division
 from fancyimpute import KNN as KNNImpute
 import csv    
+import pymonad
 from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 import re
 import math
 
@@ -55,38 +58,67 @@ function: crossValidation(X, Y, k, L, Method)
 parameters:  X: 
              Y: 
              k:
-             L:
              Method:
+             Q:
     
 description: 
 """
-def crossValidation(X, Y, k, L, Method):
+def crossValidation(X, Y, k, Method, Q, preprocess):
     predictionErrors = []
     size = int(math.floor(len(Y) / k))
     
     for i in range(k):
-        print i
+        # break up data into validation(test) and training sets
         Xtest = X[i*size:i*size + size]
         Ytest = Y[i*size:i*size + size]
         Xtraining = [X[l] for l in range(len(X)) if l < i*size or l > i*size + size - 1]
         Ytraining = [Y[l] for l in range(len(Y)) if l < i*size or l > i*size + size - 1]
-        Predictor = Method(Xtraining, Ytraining)
-        predictionErrors.append(avgLoss(Predictor(Xtest), Ytest, L))
         
+        # Method will train the model and return a method to make predictions
+        Predictor = Method(Xtraining, Ytraining, preprocess)
+        
+        # make predictions on the test set and calculate the prediction error
+        # using the Q function passed to this function
+        predictionErrors.append(Q(Predictor(Xtest), Ytest))
+     
+    # return the cross validation estimate of predicion error by averaging the 
+    # predictions errors of each fold
     return 1/k * sum(predictionErrors)
 
-"""
-function: avgLoss(Yhat, Y)
-
-parameters:  yhat: yhat is an n length vector of predictions.
-             y:    y is an n length vector of predictions of actual responses.
+def missclassifactionError(Yhat, Ytrue):
+    N = {}
     
-description: Given yhat and y, squareLoss() will return the result of the 
-             square loss function L(X) = (yhat - y)^2 
+    # N will hold the number of elements in eah class. Used to wieight the 
+    # 0-1 loss function. 
+    for i in set(Ytrue):
+        N[i] = Ytrue.count(i)
+        
+    loss = lambda yhat, ytrue: 1 / N[ytrue] if yhat != ytrue else 0
+    return sum([loss(Yhat[i], Ytrue[i]) for i in range(len(Ytrue))])
+
 """
-def avgLoss(Yhat, Y, L):
-    z = zip(Yhat,Y)
-    return (1 / (len(Y))) * sum([L(yhat, y) for yhat, y in z])
+function: logRegression(Xtrain, Ytrain, preprocess, Xtest)
+
+parameters:  Xtrain: Observations to train on
+             Ytrain: Responses to train on
+             preprocess: Method for preprocessing data. returns a preprocessor 
+                         function to transform data
+             Xtest: 
+
+Returns: The predicted output of the model.
+
+Note: This method is curried, i.e. it is partially callable. 
+"""
+@pymonad.curry
+def logRegression(Xtrain, YTrain, preprocess, Xtest):
+    preprocessor = preprocess(Xtrain)
+    
+    Xp = preprocessor(Xtrain)
+    
+    logReg = LogisticRegression()
+    logReg.fit(Xp,YTrain)
+    
+    return logReg.predict(preprocessor(Xtest))
 
 def ee445final():
     data = []
