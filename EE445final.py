@@ -11,6 +11,7 @@ from fancyimpute import KNN as KNNImpute
 import csv    
 from sklearn.preprocessing import MultiLabelBinarizer
 import re
+import math
 
 def binarizeCategoricalData(X, data):
     mlb = MultiLabelBinarizer()
@@ -47,6 +48,46 @@ def binarizeCategoricalData(X, data):
     
     return X
 
+
+"""
+function: crossValidation(X, Y, k, L, Method)
+
+parameters:  X: 
+             Y: 
+             k:
+             L:
+             Method:
+    
+description: 
+"""
+def crossValidation(X, Y, k, L, Method):
+    predictionErrors = []
+    size = int(math.floor(len(Y) / k))
+    
+    for i in range(k):
+        print i
+        Xtest = X[i*size:i*size + size]
+        Ytest = Y[i*size:i*size + size]
+        Xtraining = [X[l] for l in range(len(X)) if l < i*size or l > i*size + size - 1]
+        Ytraining = [Y[l] for l in range(len(Y)) if l < i*size or l > i*size + size - 1]
+        Predictor = Method(Xtraining, Ytraining)
+        predictionErrors.append(avgLoss(Predictor(Xtest), Ytest, L))
+        
+    return 1/k * sum(predictionErrors)
+
+"""
+function: avgLoss(Yhat, Y)
+
+parameters:  yhat: yhat is an n length vector of predictions.
+             y:    y is an n length vector of predictions of actual responses.
+    
+description: Given yhat and y, squareLoss() will return the result of the 
+             square loss function L(X) = (yhat - y)^2 
+"""
+def avgLoss(Yhat, Y, L):
+    z = zip(Yhat,Y)
+    return (1 / (len(Y))) * sum([L(yhat, y) for yhat, y in z])
+
 def ee445final():
     data = []
     X = []
@@ -66,5 +107,52 @@ def ee445final():
     # binarize categorical/discrete features
     X = binarizeCategoricalData(X, data)
     
+    """ 
+    logistic regression:
+        KNN imputation
+        hierarchical clustering for feature agglomeration.
+        10-fold cross validation.
+    """
     
+   
+    """ 
+    logistic regression:
+        KNN imputation
+        Principal Component Analysis for feature space dimension reduction.
+        10-fold cross validation.
+    """
+     
+    
+    """ 
+    tree bagging:
+        KNN imputation
+        hierarchical clustering for feature agglomeration.
+        10-fold cross validation.
+    """
+   
+    """ 
+    tree bagging:
+        KNN imputation
+        Principal Component Analysis for feature space dimension reduction.
+        10-fold cross validation.
+    """
+   
+    
+    """ 
+    SVM:
+        KNN imputation
+        hierarchical clustering for feature agglomeration.
+        10-fold cross validation.
+    """
+   
+    """ 
+    SVM:
+        KNN imputation
+        Principal Component Analysis for feature space dimension reduction.
+        10-fold cross validation.
+    """
+   
+    """
+    model selection
+    """
     
