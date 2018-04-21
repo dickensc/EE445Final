@@ -13,6 +13,7 @@ import pymonad
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.decomposition import PCA
 import re
 import math
 
@@ -120,6 +121,52 @@ def logRegression(Xtrain, YTrain, preprocess, Xtest):
     
     return logReg.predict(preprocessor(Xtest))
 
+"""
+function: KNNPCAPreProcess(Xtrain, X)
+
+parameters: Xtrain: Observations to standardize and train on
+            X: Observations to be transformed using the same scaling and 
+            feature space reduction methods as Xtrain
+            
+Returns: Transformed X
+
+Note: This method is curreid, i.e. it is partially callable
+"""
+@pymonad.curry
+def KNNPCAPreProcess(XTrain, X):
+    scaler = StandardScaler().fit(XTrain)
+    
+    XScaled = scaler.transform(X).tolist()
+    XScaledFilled = KNNImpute(k=5).complete(XScaled)
+    
+    XTrainScaled = scaler.transform(XTrain).tolist()
+    XTrainScaledFilled = KNNImpute(k=5).complete(XTrainScaled)
+    
+    dimReducer = PCA(n_components=int(math.floor(len(XTrain) / 4)))
+    dimReducer.fit(XTrainScaledFilled)
+    
+    return dimReducer.transform(XScaledFilled)
+    
+    
+    
+"""
+function: KNNHierClusterPreProcess(Xtrain, X)
+
+parameters: Xtrain: Observations to standardize and train on
+            X: Observations to be transformed using the same scaling and 
+            feature space reduction methods as Xtrain
+            
+Returns: Transformed X
+
+Note: This method is curreid, i.e. it is partially callable
+"""
+@pymonad.curry
+def KNNHierClusterPreProcess(Xtrain, X):
+    scaler = StandardScaler().fit(Xtrain)
+    
+    XTrainScaled = scaler.transform(XTraining).tolist()
+    
+
 def ee445final():
     data = []
     X = []
@@ -156,14 +203,14 @@ def ee445final():
      
     
     """ 
-    tree bagging:
+    Random Forests:
         KNN imputation
         hierarchical clustering for feature agglomeration.
         10-fold cross validation.
     """
    
     """ 
-    tree bagging:
+    Random Forests:
         KNN imputation
         Principal Component Analysis for feature space dimension reduction.
         10-fold cross validation.
