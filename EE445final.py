@@ -134,19 +134,18 @@ Note: This method is curreid, i.e. it is partially callable
 """
 @pymonad.curry
 def KNNPCAPreProcess(XTrain, X):
-    scaler = StandardScaler().fit(XTrain)
+    XTrainFilled = KNNImpute(k=5).complete(XTrain)
+    XFilled = KNNImpute(k=5).complete(X)
+
+    scaler = StandardScaler().fit(XTrainFilled)
     
-    XScaled = scaler.transform(X).tolist()
-    XScaledFilled = KNNImpute(k=5).complete(XScaled)
-    
-    XTrainScaled = scaler.transform(XTrain).tolist()
-    XTrainScaledFilled = KNNImpute(k=5).complete(XTrainScaled)
+    XScaledFilled = scaler.transform(XFilled).tolist()
+    XTrainScaledFilled = scaler.transform(XTrainFilled).tolist()
     
     dimReducer = PCA(n_components=int(math.floor(len(XTrain) / 4)))
     dimReducer.fit(XTrainScaledFilled)
     
     return dimReducer.transform(XScaledFilled)
-    
     
     
 """
