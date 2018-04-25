@@ -14,6 +14,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.decomposition import PCA
+from sklearn.cluster import FeatureAgglomeration
 import re
 import math
 
@@ -142,7 +143,7 @@ def KNNPCAPreProcess(XTrain, X):
     XScaledFilled = scaler.transform(XFilled).tolist()
     XTrainScaledFilled = scaler.transform(XTrainFilled).tolist()
     
-    dimReducer = PCA(n_components=int(math.floor(len(XTrain) / 4)))
+    dimReducer = PCA(n_components=int(math.floor(len(XTrain[0]) / 4)))
     dimReducer.fit(XTrainScaledFilled)
     
     return dimReducer.transform(XScaledFilled)
@@ -160,10 +161,20 @@ Returns: Transformed X
 Note: This method is curreid, i.e. it is partially callable
 """
 @pymonad.curry
-def KNNHierClusterPreProcess(Xtrain, X):
-    scaler = StandardScaler().fit(Xtrain)
+def KNNHierClusterPreProcess(XTrain, X):
+    XTrainFilled = KNNImpute(k=5).complete(XTrain)
+    XFilled = KNNImpute(k=5).complete(X)
+
+    scaler = StandardScaler().fit(XTrainFilled)
     
-    XTrainScaled = scaler.transform(XTraining).tolist()
+    XScaledFilled = scaler.transform(XFilled).tolist()
+    XTrainScaledFilled = scaler.transform(XTrainFilled).tolist()
+    
+    dimReducer = FeatureAgglomeration(n_clusters=int(math.floor(len(XTrain[0]) / 3)))
+    dimReducer.fit(XTrainScaledFilled)
+    
+    return dimReducer.transform(XScaledFilled)
+    
     
 
 def ee445final():
