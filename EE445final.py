@@ -13,6 +13,7 @@ import pymonad
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.decomposition import PCA
 from sklearn.cluster import FeatureAgglomeration
 import re
@@ -121,6 +122,30 @@ def logRegression(Xtrain, YTrain, preprocess, Xtest):
     logReg.fit(Xp,YTrain)
     
     return logReg.predict(preprocessor(Xtest))
+
+"""
+function: logRegression(Xtrain, Ytrain, preprocess, Xtest)
+
+parameters:  Xtrain: Observations to train on
+             Ytrain: Responses to train on
+             preprocess: Method for preprocessing data. returns a preprocessor 
+                         function to transform data
+             Xtest: 
+
+Returns: The predicted output of the model.
+
+Note: This method is curried, i.e. it is partially callable. 
+"""
+@pymonad.curry
+def RandomForest(Xtrain, YTrain, preprocess, Xtest):
+    preprocessor = preprocess(Xtrain)
+    
+    Xp = preprocessor(Xtrain)
+    
+    RandmFrst = RandomForestClassifier()
+    RandmFrst.fit(Xp,YTrain)
+    
+    return RandmFrst.predict(preprocessor(Xtest))
 
 """
 function: KNNPCAPreProcess(Xtrain, X)
