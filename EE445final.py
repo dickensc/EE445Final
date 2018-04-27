@@ -70,6 +70,7 @@ description:
 def crossValidation(X, Y, k, Method, Q, preprocess):
     predictionErrors = []
     size = int(math.floor(len(Y) / k))
+    Predictors = []
     
     for i in range(k):
         # break up data into validation(test) and training sets
@@ -80,6 +81,7 @@ def crossValidation(X, Y, k, Method, Q, preprocess):
         
         # Method will train the model and return a method to make predictions
         Predictor = Method(Xtraining, Ytraining, preprocess)
+        Predictors.append(Predictor)
         
         # make predictions on the test set and calculate the prediction error
         # using the Q function passed to this function
@@ -87,12 +89,12 @@ def crossValidation(X, Y, k, Method, Q, preprocess):
      
     # return the cross validation estimate of predicion error by averaging the 
     # predictions errors of each fold
-    return 1/k * sum(predictionErrors)
+    return 1/k * sum(predictionErrors), Predictors[predictionErrors.index(min(predictionErrors))]
 
 def missclassifactionError(Yhat, Ytrue):
     N = {}
     
-    # N will hold the number of elements in eah class. Used to wieight the 
+    # N will hold the number of elements in eah class. Used to weight the 
     # 0-1 loss function. 
     for i in set(Ytrue):
         N[i] = Ytrue.count(i)
@@ -185,8 +187,17 @@ Note: This method is curreid, i.e. it is partially callable
 """
 @pymonad.curry
 def KNNPCAPreProcess(XTrain, X):
-    XTrainFilled = KNNImpute(k=5).complete(XTrain)
-    XFilled = KNNImpute(k=5).complete(X)
+    try:
+        XTrainFilled = KNNImpute(k=5, verbose = False).complete(XTrain)
+    except ValueError as err:
+        print err.message
+        XTrainFilled = XTrain
+    
+    try:
+        XFilled = KNNImpute(k=5).complete(X)
+    except ValueError as err:
+        print err.message
+        XFilled = X
 
     scaler = StandardScaler().fit(XTrainFilled)
     
@@ -212,8 +223,18 @@ Note: This method is curreid, i.e. it is partially callable
 """
 @pymonad.curry
 def KNNHierClusterPreProcess(XTrain, X):
-    XTrainFilled = KNNImpute(k=5).complete(XTrain)
-    XFilled = KNNImpute(k=5).complete(X)
+    try:
+        XTrainFilled = KNNImpute(k=5, verbose = False).complete(XTrain)
+    except ValueError as err:
+        print err.message
+        XTrainFilled = XTrain
+    
+    try:
+        XFilled = KNNImpute(k=5).complete(X)
+    except ValueError as err:
+        print err.message
+        XFilled = X
+
 
     scaler = StandardScaler().fit(XTrainFilled)
     
@@ -231,6 +252,7 @@ def ee445final():
     data = []
     X = []
     Y = []
+    Models = {}
     
     with open('/Users/charlesdickens/Documents/GitHub/EE445Final/AMLtrain.csv', 'r') as csvfile:
        reader = csv.reader(csvfile, delimiter='\n', quotechar='|')
@@ -246,13 +268,17 @@ def ee445final():
     # binarize categorical/discrete features
     X = binarizeCategoricalData(X, data)
     
+    XVal = X[10:]
+    XTest = X[:10]
+    YVal = Y[10:]
+    YTest = Y[:10]
     """ 
     logistic regression:
         KNN imputation
         hierarchical clustering for feature agglomeration.
         10-fold cross validation.
     """
-    
+    Models["Logistic Regression - Hierarchical Clustering"] = crossValidation(XVal, YVal, 10, logRegression, missclassifactionError, KNNHierClusterPreProcess)
    
     """ 
     logistic regression:
@@ -260,7 +286,8 @@ def ee445final():
         Principal Component Analysis for feature space dimension reduction.
         10-fold cross validation.
     """
-     
+    Models["Logistic Regression - PCA"] = crossValidation(XVal, YVal, 10, logRegression, missclassifactionError, KNNPCAPreProcess)
+
     
     """ 
     Random Forests:
@@ -268,6 +295,8 @@ def ee445final():
         hierarchical clustering for feature agglomeration.
         10-fold cross validation.
     """
+    Models["Random Forest - Hierarchical Clustering"] = crossValidation(XVal, YVal, 10, RandomForest, missclassifactionError, KNNHierClusterPreProcess)
+
    
     """ 
     Random Forests:
@@ -275,6 +304,7 @@ def ee445final():
         Principal Component Analysis for feature space dimension reduction.
         10-fold cross validation.
     """
+    Models["Random Forest - PCA"] = crossValidation(XVal, YVal, 10, RandomForest, missclassifactionError, KNNPCAPreProcess)
    
     
     """ 
@@ -283,6 +313,7 @@ def ee445final():
         hierarchical clustering for feature agglomeration.
         10-fold cross validation.
     """
+    Models["SVM - Hierarchical Clustering"] = crossValidation(XVal, YVal, 10, SVMClassifier, missclassifactionError, KNNHierClusterPreProcess)
    
     """ 
     SVM:
@@ -290,8 +321,12 @@ def ee445final():
         Principal Component Analysis for feature space dimension reduction.
         10-fold cross validation.
     """
+    Models["SVM - PCA"] = crossValidation(XVal, YVal, 10, SVMClassifier, missclassifactionError, KNNPCAPreProcess)
    
     """
     model selection
     """
+    
+    
+    #return Models, Models["Logistic Regression - Hierarchical Clustering"][1](XTest), YTest
     
