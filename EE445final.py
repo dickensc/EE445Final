@@ -14,6 +14,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 from sklearn.decomposition import PCA
 from sklearn.cluster import FeatureAgglomeration
 import re
@@ -124,7 +125,7 @@ def logRegression(Xtrain, YTrain, preprocess, Xtest):
     return logReg.predict(preprocessor(Xtest))
 
 """
-function: logRegression(Xtrain, Ytrain, preprocess, Xtest)
+function: RandomForest(Xtrain, Ytrain, preprocess, Xtest)
 
 parameters:  Xtrain: Observations to train on
              Ytrain: Responses to train on
@@ -146,6 +147,30 @@ def RandomForest(Xtrain, YTrain, preprocess, Xtest):
     RandmFrst.fit(Xp,YTrain)
     
     return RandmFrst.predict(preprocessor(Xtest))
+
+"""
+function: SVMClassifier(Xtrain, Ytrain, preprocess, Xtest)
+
+parameters:  Xtrain: Observations to train on
+             Ytrain: Responses to train on
+             preprocess: Method for preprocessing data. returns a preprocessor 
+                         function to transform data
+             Xtest: 
+
+Returns: The predicted output of the model.
+
+Note: This method is curried, i.e. it is partially callable. 
+"""
+@pymonad.curry
+def SVMClassifier(Xtrain, YTrain, preprocess, Xtest):
+    preprocessor = preprocess(Xtrain)
+    
+    Xp = preprocessor(Xtrain)
+    
+    SVMC = SVC()
+    SVMC.fit(Xp,YTrain)
+    
+    return SVMC.predict(preprocessor(Xtest))
 
 """
 function: KNNPCAPreProcess(Xtrain, X)
@@ -213,7 +238,7 @@ def ee445final():
        for row in reader:
           data.append(re.split(regex,row[0]))
 
-    # feature we are predicitng
+    # feature we are prediciting
     Y = [d[13] for d in data[1:]]
     # not interested in patient id and we remove the features we are predicting
     X = [d[1:13] + d[18:] for d in data[1:]]
