@@ -70,7 +70,6 @@ description:
 def crossValidation(X, Y, k, Method, Q, preprocess):
     predictionErrors = []
     size = int(math.floor(len(Y) / k))
-    Predictors = []
     
     for i in range(k):
         # break up data into validation(test) and training sets
@@ -81,7 +80,6 @@ def crossValidation(X, Y, k, Method, Q, preprocess):
         
         # Method will train the model and return a method to make predictions
         Predictor = Method(Xtraining, Ytraining, preprocess)
-        Predictors.append(Predictor)
         
         # make predictions on the test set and calculate the prediction error
         # using the Q function passed to this function
@@ -89,7 +87,7 @@ def crossValidation(X, Y, k, Method, Q, preprocess):
      
     # return the cross validation estimate of predicion error by averaging the 
     # predictions errors of each fold
-    return 1/k * sum(predictionErrors), Predictors[predictionErrors.index(min(predictionErrors))]
+    return 1/k * sum(predictionErrors), Method(X, Y, preprocess)
 
 def missclassifactionError(Yhat, Ytrue):
     N = {}
@@ -268,25 +266,22 @@ def ee445final():
     # binarize categorical/discrete features
     X = binarizeCategoricalData(X, data)
     
-    XVal = X[10:]
-    XTest = X[:10]
-    YVal = Y[10:]
-    YTest = Y[:10]
     """ 
     logistic regression:
         KNN imputation
         hierarchical clustering for feature agglomeration.
         10-fold cross validation.
     """
-    Models["Logistic Regression - Hierarchical Clustering"] = crossValidation(XVal, YVal, 10, logRegression, missclassifactionError, KNNHierClusterPreProcess)
-   
+    Models["Logistic Regression - Hierarchical Clustering"] = crossValidation(X, Y, 10, logRegression, missclassifactionError, KNNHierClusterPreProcess)
+    
+    
     """ 
     logistic regression:
         KNN imputation
         Principal Component Analysis for feature space dimension reduction.
         10-fold cross validation.
     """
-    Models["Logistic Regression - PCA"] = crossValidation(XVal, YVal, 10, logRegression, missclassifactionError, KNNPCAPreProcess)
+    Models["Logistic Regression - PCA"] = crossValidation(X, Y, 10, logRegression, missclassifactionError, KNNPCAPreProcess)
 
     
     """ 
@@ -295,7 +290,7 @@ def ee445final():
         hierarchical clustering for feature agglomeration.
         10-fold cross validation.
     """
-    Models["Random Forest - Hierarchical Clustering"] = crossValidation(XVal, YVal, 10, RandomForest, missclassifactionError, KNNHierClusterPreProcess)
+    Models["Random Forest - Hierarchical Clustering"] = crossValidation(X, Y, 10, RandomForest, missclassifactionError, KNNHierClusterPreProcess)
 
    
     """ 
@@ -304,7 +299,7 @@ def ee445final():
         Principal Component Analysis for feature space dimension reduction.
         10-fold cross validation.
     """
-    Models["Random Forest - PCA"] = crossValidation(XVal, YVal, 10, RandomForest, missclassifactionError, KNNPCAPreProcess)
+    Models["Random Forest - PCA"] = crossValidation(X, Y, 10, RandomForest, missclassifactionError, KNNPCAPreProcess)
    
     
     """ 
@@ -313,7 +308,7 @@ def ee445final():
         hierarchical clustering for feature agglomeration.
         10-fold cross validation.
     """
-    Models["SVM - Hierarchical Clustering"] = crossValidation(XVal, YVal, 10, SVMClassifier, missclassifactionError, KNNHierClusterPreProcess)
+    Models["SVM - Hierarchical Clustering"] = crossValidation(X, Y, 10, SVMClassifier, missclassifactionError, KNNHierClusterPreProcess)
    
     """ 
     SVM:
@@ -321,12 +316,12 @@ def ee445final():
         Principal Component Analysis for feature space dimension reduction.
         10-fold cross validation.
     """
-    Models["SVM - PCA"] = crossValidation(XVal, YVal, 10, SVMClassifier, missclassifactionError, KNNPCAPreProcess)
+    Models["SVM - PCA"] = crossValidation(X, Y, 10, SVMClassifier, missclassifactionError, KNNPCAPreProcess)
    
     """
-    model selection
+    model selection: select the model with the lowest estimate of prediction 
+                     error and that is trained on all of the observations
     """
     
-    
-    #return Models, Models["Logistic Regression - Hierarchical Clustering"][1](XTest), YTest
+    return Models
     
